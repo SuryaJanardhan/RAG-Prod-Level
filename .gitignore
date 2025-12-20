@@ -1,3 +1,67 @@
-myenv
+# Python virtual environment
+myenv/
+venv/
+env/
+ENV/
 
+# Environment variables
 .env
+.env.local
+.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Cache directories
+cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Data directories
+data/chroma_db/
+data/processed/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
