@@ -334,6 +334,7 @@ pytest tests/
 - [Quick Start Guide](docs/quickstart.md)
 - [Phase 1 Details](docs/phase1.md) - Basic RAG Pipeline
 - [Phase 2 Details](docs/phase2.md) - Agentic RAG with LangGraph
+- [Phase 3 Details](docs/phase3.md) - LlamaIndex Integration
 - [LangChain Documentation](https://python.langchain.com/)
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [LlamaIndex Documentation](https://docs.llamaindex.ai/)
@@ -344,7 +345,7 @@ pytest tests/
 - [x] Phase 0: Tech stack configuration
 - [x] Phase 1: Basic RAG pipeline
 - [x] Phase 2: Agentic orchestration
-- [ ] Phase 3: Advanced retrieval
+- [x] Phase 3: Advanced retrieval (LlamaIndex)
 - [ ] Phase 4: Production features
 
 ## 📄 License
@@ -353,7 +354,7 @@ MIT
 
 ---
 
-**Current Status:** Phase 2 Complete ✅
+**Current Status:** Phase 3 Complete ✅
 
 **Features**:
 
@@ -361,5 +362,7 @@ MIT
 - ✅ Agentic RAG with LangGraph (Phase 2)
 - ✅ Adaptive retrieval and query rewriting
 - ✅ Tool integrations (calculator, web search)
+- ✅ LlamaIndex advanced query engines (Phase 3)
+- ✅ Multi-source routing and sub-question decomposition
 
 **Next:** Phase 3 - LlamaIndex Integration (Advanced Retrieval)
