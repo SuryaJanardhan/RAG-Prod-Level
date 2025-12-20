@@ -193,6 +193,57 @@ curl -X POST "http://localhost:8000/query" \
   -d '{"query": "What is RAG?", "user_id": "test", "return_sources": true}'
 ```
 
+### Running Phase 2: Agentic RAG
+
+#### 1. Test Agentic Behavior
+
+```bash
+python scripts/test_agentic_rag.py
+```
+
+Interactive testing of LangGraph-based agentic RAG with:
+
+- Adaptive retrieval decisions
+- Query rewriting
+- Document grading
+
+#### 2. Compare Basic vs Agentic
+
+```bash
+python scripts/compare_rag_modes.py
+```
+
+Side-by-side comparison of Phase 1 and Phase 2 approaches.
+
+#### 3. Use Agentic Mode in API
+
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "How does it work?", "use_agentic": true}'
+```
+
+The agentic mode will:
+
+- Decide if retrieval is needed
+- Rewrite unclear queries
+- Grade document relevance
+- Retry with better queries if needed
+
+Access API at:
+
+- Interactive docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
+- Stats: http://localhost:8000/stats
+
+#### 4. Query via API
+
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is RAG?", "user_id": "test", "return_sources": true}'
+```
+
 See [Quick Start Guide](docs/quickstart.md) for detailed instructions.
 
 ## 🔧 Tech Stack
