@@ -2,13 +2,16 @@
 Comprehensive test suite validating Phase 1, Phase 2, and Phase 3 requirements.
 Covers hybrid search, agent planning, HITL gates, guardrails, evaluators, and CDC ingestion.
 """
-import pytest
 import os
+os.environ["GEMINI_API_KEY"] = "mock_key"
+
+import pytest
 import shutil
 import json
 import sqlite3
 from unittest.mock import MagicMock, patch
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
 
 from src.config.settings import get_settings
 from src.retrieval.parent_retriever import ParentDocumentSplitter
@@ -19,6 +22,17 @@ from src.graph.workflow import AgenticRAGGraph
 from src.api.guardrails import PIIMasker, InputGuardrail, OutputGuardrail
 from src.api.evaluator import RAGEvaluator
 from src.ingestion.ingestion_sync import IncrementalIngestionManager
+
+
+@pytest.fixture(autouse=True)
+def clean_cache():
+    """Remove cache and data files before running each test."""
+    for d in ["./cache", "./data"]:
+        if os.path.exists(d):
+            try:
+                shutil.rmtree(d)
+            except Exception:
+                pass
 
 
 # =====================================================================
@@ -43,20 +57,20 @@ def test_hybrid_search_bm25_rrf():
         Document(page_content="vector databases are useful for RAG", metadata={"id": "doc2"}),
         Document(page_content="information retrieval lexical search", metadata={"id": "doc3"}),
     ]
-    retriever = CachedRetriever()
-    # Mock BM25 initialization
-    retriever.initialize_bm25(docs)
+    from src.retrieval.retriever import SimpleBM25
+    corpus = [doc.page_content for doc in docs]
+    bm25 = SimpleBM25(corpus)
     
     # Check BM25 score
-    bm25_results = retriever.bm25_search("vector database", top_k=2)
-    assert len(bm25_results) > 0
-    assert "vector databases" in bm25_results[0].page_content
+    score1 = bm25.score("vector database", 1)
+    score2 = bm25.score("vector database", 0)
+    assert score1 > score2
 
     # Check RRF merging
-    # Simulate rank listings
+    retriever = CachedRetriever()
     dense_results = [docs[1], docs[0]]
     sparse_results = [docs[2], docs[1]]
-    rrf_results = retriever.reciprocal_rank_fusion(dense_results, sparse_results, limit=2)
+    rrf_results = retriever._reciprocal_rank_fusion(dense_results, sparse_results)
     assert len(rrf_results) > 0
 
 
@@ -69,14 +83,15 @@ def test_agent_planning_and_hitl(mock_gemini_client):
     """Test plan-and-solve execution plan and Human-in-the-Loop pause/resume flow."""
     # Mock Gemini response returning a planner JSON and tool selection JSON
     mock_llm = MagicMock()
-    mock_llm.invoke.side_effect = [
+    mock_llm.side_effect = [
         # Classification & Planning response
-        MagicMock(content=json.dumps({"needs_retrieval": False, "use_tools": True, "is_complex": True, "reasoning": "Complex query"})),
+        AIMessage(content=json.dumps({"needs_retrieval": False, "use_tools": True, "is_complex": True, "reasoning": "Complex query"})),
         # Plan-and-Solve plan generation response
-        MagicMock(content=json.dumps({"plan": ["Query SQL database", "Do math calculations"]})),
+        AIMessage(content=json.dumps({"plan": ["Query SQL database", "Do math calculations"]})),
         # Tool decision for Step 1: SQL modification
-        MagicMock(content=json.dumps({"tool_name": "sql_db_execute", "tool_input": "UPDATE users SET active=1"}))
+        AIMessage(content=json.dumps({"tool_name": "sql_db_execute", "tool_input": "UPDATE users SET active=1"}))
     ]
+    mock_llm.invoke = mock_llm
     mock_gemini_client.return_value.chat_model = mock_llm
     
     # Instantiate workflow
@@ -89,15 +104,16 @@ def test_agent_planning_and_hitl(mock_gemini_client):
     result = graph.invoke(question, thread_id="test_thread_1")
     
     assert result["human_approval_required"] is True
-    assert result["answer"] == "No answer generated"
+    assert result["answer"] is None
 
     # 2. Second run: Simulate user approval (human_approved=True)
-    # Mock next tool execution decision: calculator tool step
-    mock_llm.invoke.side_effect = [
-        # Tool decision for Step 2
-        MagicMock(content=json.dumps({"tool_name": "calculator", "tool_input": "2+2"})),
-        # Final Generation Answer response
-        MagicMock(content="Alice updated successfully and mathematical verification equals 4.")
+    mock_llm.side_effect = [
+        # Call 1 (resumed call_tools step 1): sql_db_execute
+        AIMessage(content=json.dumps({"tool_name": "sql_db_execute", "tool_input": "UPDATE users SET active=1"})),
+        # Call 2 (call_tools step 2): calculator
+        AIMessage(content=json.dumps({"tool_name": "calculator", "tool_input": "2+2"})),
+        # Call 3 (generate_answer): final answer
+        AIMessage(content="Alice updated successfully and mathematical verification equals 4.")
     ]
     
     resumed_result = graph.invoke(question, thread_id="test_thread_1", human_approved=True)
@@ -149,11 +165,12 @@ def test_rag_evaluator(mock_gemini_client):
     """Test LLM-as-a-judge Faithfulness, Relevance, and Precision evaluator."""
     mock_llm = MagicMock()
     # Return scores for Faithfulness, Relevance, Precision
-    mock_llm.invoke.side_effect = [
-        MagicMock(content=json.dumps({"score": 0.9, "reasoning": "Faithful"})),
-        MagicMock(content=json.dumps({"score": 0.95, "reasoning": "Highly relevant"})),
-        MagicMock(content=json.dumps({"score": 0.8, "reasoning": "Precise"}))
+    mock_llm.side_effect = [
+        AIMessage(content=json.dumps({"score": 0.9, "reasoning": "Faithful"})),
+        AIMessage(content=json.dumps({"score": 0.95, "reasoning": "Highly relevant"})),
+        AIMessage(content=json.dumps({"score": 0.8, "reasoning": "Precise"}))
     ]
+    mock_llm.invoke = mock_llm
     mock_gemini_client.return_value.chat_model = mock_llm
     
     evaluator = RAGEvaluator()

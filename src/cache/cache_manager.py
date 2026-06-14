@@ -42,6 +42,9 @@ class SQLiteEmbeddingCache(EmbeddingCache):
     
     def _initialize_db(self) -> None:
         """Create the embeddings table if it doesn't exist."""
+        import os
+        if os.path.dirname(self.db_path):
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("""

@@ -4,7 +4,21 @@ Supports Qdrant (prod) and Chroma (dev) based on configuration.
 """
 from typing import Optional
 from abc import ABC, abstractmethod
-from langchain_community.vectorstores import Qdrant, Chroma
+try:
+    from langchain_qdrant import Qdrant
+except ImportError:
+    try:
+        from langchain_community.vectorstores import Qdrant
+    except ImportError:
+        Qdrant = None
+
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    try:
+        from langchain_community.vectorstores import Chroma
+    except ImportError:
+        Chroma = None
 from langchain_core.vectorstores import VectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams

@@ -116,7 +116,7 @@ class OutputGuardrail:
                 
         # 2. Basic hallucination check: Ensure numbers in output exist in the context
         # (Very simple check: find all percentages or amounts and confirm context mentions them)
-        numbers = re.findall(r"\b\d+(?:\.\d+)?%\b|\$\d+(?:\.\d+)?", response)
+        numbers = re.findall(r"\b\d+(?:\.\d+)?%|\$\d+(?:\.\d+)?", response)
         unverified_claims = []
         for num in numbers:
             if num not in context:

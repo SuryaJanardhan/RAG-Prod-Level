@@ -9,7 +9,10 @@ import hashlib
 import os
 from typing import List, Dict, Any, Optional
 from langchain_core.documents import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
 from ..config import settings
 
 
